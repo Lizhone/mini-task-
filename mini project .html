@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Event Manager</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fb;
+        padding: 20px;
+    }
+
+    h1 { margin: 0; }
+
+    .container {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .box {
+        width: 350px;
+        padding: 20px;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    input, button {
+        width: 100%;
+        padding: 8px;
+        margin: 6px 0;
+    }
+
+    button {
+        background: #1e293b;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    button:hover { background: #0f172a; }
+
+    /* Event Card */
+    .event-card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .event-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .event-title {
+        font-size: 20px;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .badge {
+        background: #e5edff;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        color: #1d4ed8;
+    }
+
+    .inventory-item {
+        margin-top: 10px;
+        padding-left: 10px;
+        border-left: 3px solid #ddd;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Events</h1>
+<p>Manage your events and inventories</p>
+
+<div class="container">
+    <!-- EVENT INPUT FORM -->
+    <div class="box">
+        <h3>Add / Edit Event</h3>
+
+        <label>Event Name</label>
+        <input id="event-name">
+
+        <label>Start Date</label>
+        <input type="date" id="event-start">
+
+        <label>End Date</label>
+        <input type="date" id="event-end">
+
+        <label>Type (Sports, Corporate etc.)</label>
+        <input id="event-type">
+
+        <hr>
+        <h4>Add Inventory</h4>
+
+        <label>Game Name</label>
+        <input id="inv-name" placeholder="e.g. Cricket, Football">
+
+        <label>Quantity</label>
+        <input id="inv-qty" type="number" placeholder="e.g. 20">
+
+        <label>Price</label>
+        <input id="inv-price" type="number" placeholder="e.g. 15000">
+
+        <label>Game Owner</label>
+        <input id="inv-owner" placeholder="e.g. John Smith">
+
+        <button onclick="addInventory()">Add Inventory</button>
+
+        <button onclick="saveEvent()">Save Event</button>
+        <button onclick="updateEvent()">Update Event</button>
+
+    </div>
+
+    <!-- EVENT CARDS -->
+    <div id="event-display" style="flex:1;"></div>
+</div>
+
+<script>
+let events = [];
+let inventories = [];
+let editIndex = -1;
+
+// ADD INVENTORY
+function addInventory() {
+    let name = document.getElementById("inv-name").value;
+    let qty = document.getElementById("inv-qty").value;
+    let price = document.getElementById("inv-price").value;
+    let owner = document.getElementById("inv-owner").value;
+
+    if (!name || !qty || !price || !owner) {
+        alert("Fill all inventory fields!");
+        return;
+    }
+
+    inventories.push({
+        name,
+        quantity: qty,
+        price,
+        owner
+    });
+
+    document.getElementById("inv-name").value = "";
+    document.getElementById("inv-qty").value = "";
+    document.getElementById("inv-price").value = "";
+    document.getElementById("inv-owner").value = "";
+
+    alert("Inventory Added!");
+}
+
+// SAVE EVENT
+function saveEvent() {
+    const event = {
+        name: document.getElementById("event-name").value,
+        startDate: document.getElementById("event-start").value,
+        endDate: document.getElementById("event-end").value,
+        type: document.getElementById("event-type").value,
+        inventories: [...inventories]
+    };
+
+    if (!event.name || !event.startDate) {
+        alert("Fill at least event name & start date");
+        return;
+    }
+
+    events.push(event);
+    inventories = [];
+    clearInputs();
+    renderEvents();
+}
+
+// UPDATE EVENT
+function updateEvent() {
+    if (editIndex === -1) {
+        alert("Select an event to update!");
+        return;
+    }
+
+    events[editIndex] = {
+        name: document.getElementById("event-name").value,
+        startDate: document.getElementById("event-start").value,
+        endDate: document.getElementById("event-end").value,
+        type: document.getElementById("event-type").value,
+        inventories: [...inventories]
+    };
+
+    editIndex = -1;
+    inventories = [];
+    clearInputs();
+    renderEvents();
+}
+
+// LOAD EVENT INTO FORM
+function loadEvent(index) {
+    const e = events[index];
+    document.getElementById("event-name").value = e.name;
+    document.getElementById("event-start").value = e.startDate;
+    document.getElementById("event-end").value = e.endDate;
+    document.getElementById("event-type").value = e.type;
+
+    inventories = [...e.inventories];
+    editIndex = index;
+}
+
+// CLEAR FORM
+function clearInputs() {
+    document.getElementById("event-name").value = "";
+    document.getElementById("event-start").value = "";
+    document.getElementById("event-end").value = "";
+    document.getElementById("event-type").value = "";
+}
+
+// RENDER EVENT CARDS
+function renderEvents() {
+    const display = document.getElementById("event-display");
+    display.innerHTML = "";
+
+    events.forEach((event, index) => {
+        const card = document.createElement("div");
+        card.className = "event-card";
+
+        card.innerHTML = `
+            <div class="event-header">
+                <h3 class="event-title">${event.name}</h3>
+                <button onclick="loadEvent(${index})">Edit</button>
+            </div>
+
+            <p><strong>Date:</strong> ${event.startDate} - ${event.endDate}</p>
+            <p><strong>Type:</strong> <span class="badge">${event.type}</span></p>
+            <p><strong>Inventories:</strong></p>
+        `;
+
+        event.inventories.forEach(inv => {
+            let div = document.createElement("div");
+            div.className = "inventory-item";
+            div.innerHTML = `
+                <b>${inv.name}</b><br>
+                Qty: ${inv.quantity}<br>
+                Price: ₹${inv.price}<br>
+                Owner: ${inv.owner}
+            `;
+            card.appendChild(div);
+        });
+
+        display.appendChild(card);
+    });
+}
+
+</script>
+</body>
+</html>
